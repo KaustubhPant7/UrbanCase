@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
-# Always allow all vercel.app preview/production subdomains
-ALLOWED_HOSTS += [".vercel.app"]
+# Allow all vercel.app and railway.app subdomains
+ALLOWED_HOSTS += [".vercel.app", ".railway.app", ".up.railway.app"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

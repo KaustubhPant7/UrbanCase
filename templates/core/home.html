@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Home — MyStore{% endblock %}
+
+{% block content %}
+
+  <!-- Hero Banners -->
+  {% if banners %}
+  <div id="heroBanners" class="carousel slide mb-5" data-bs-ride="carousel">
+    <div class="carousel-inner rounded-3 overflow-hidden shadow">
+      {% for banner in banners %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <img src="{{ banner.image.url }}" class="d-block w-100" style="max-height:480px;object-fit:cover;" alt="{{ banner.title }}" />
+     <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
+          <h2>{{ banner.title }}</h2>
+          {% if banner.subtitle %}<p>{{ banner.subtitle }}</p>{% endif %}
+          {% if banner.button_text %}
+            <a href="{{ banner.button_link }}" class="btn btn-warning fw-semibold">{{ banner.button_text }}</a>
+          {% endif %}
+    
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroBanners" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroBanners" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- Category Pills -->
+  {% if categories %}
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{% url 'products:list' %}" class="btn btn-outline-dark btn-sm">All</a>
+    {% for cat in categories %}
+      <a href="{% url 'products:list' %}?category={{ cat.slug }}" class="btn btn-outline-dark btn-sm">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Featured Products -->
+  <h3 class="fw-bold mb-3">Featured Products</h3>
+  {% if featured_products %}
+  <div class="row row-cols-2 row-cols-md-4 g-4">
+    {% for product in featured_products %}
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" class="card-img-top" style="height:200px;object-fit:cover;" alt="{{ product.name }}" />
+        {% else %}
+          <div class="bg-secondary d-flex align-items-center justify-content-center" style="height:200px;">
+            <i class="bi bi-image text-white fs-1"></i>
+          </div>
+        {% endif %}
+        <div class="card-body">
+          <h6 class="card-title fw-semibold mb-1">{{ product.name }}</h6>
+          {% if product.tagline %}<p class="text-muted small mb-1">{{ product.tagline }}</p>{% endif %}
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold text-success">Rs. {{ product.effective_price }}</span>
+            {% if product.discount_price %}
+              <span class="text-muted text-decoration-line-through small">Rs. {{ product.price }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-footer bg-white border-0 pt-0">
+          <a href="{% url 'products:detail' product.slug %}" class="btn btn-dark btn-sm w-100">View Details</a>
+          <!-- Wishlist toggle -->
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'wishlist:toggle' product.slug %}" class="mt-1">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.path }}" />
+              <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                <i class="bi bi-heart{% if product.pk in user_wishlist_products %}-fill{% endif %} me-1"></i>
+                {% if product.pk in user_wishlist_products %}Saved{% else %}Save{% endif %}
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'account_login' %}" class="btn btn-outline-secondary btn-sm w-100 mt-1">
+              <i class="bi bi-heart me-1"></i> Save
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="text-muted">No featured products yet.</p>
+  {% endif %}
+
+{% endblock %}

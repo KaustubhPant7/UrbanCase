@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual env
+venv/
+env/
+.venv/
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+
+# Secrets — NEVER bake into image
+.env
+
+# Dev tools
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Docs
+README.md
+*.md
+
+# OS
+.DS_Store
+Thumbs.db

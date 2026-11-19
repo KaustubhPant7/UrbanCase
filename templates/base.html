@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}UrbanCase{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+  <style>
+    /* ── UrbanCase Navbar — inline guarantee ── */
+    .uc-navbar{background:#0d0d0d;border-bottom:1px solid rgba(255,255,255,.07);position:sticky;top:0;z-index:1030;width:100%}
+    .uc-navbar__inner{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:64px;gap:1rem}
+    .uc-navbar__brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
+    .uc-logo-text{display:flex;flex-direction:column;line-height:1.1}
+    .uc-logo-title{font-size:.62rem;font-weight:800;letter-spacing:.18em;color:#fff;text-transform:uppercase}
+    .uc-logo-sub{font-size:.55rem;font-weight:500;letter-spacing:.22em;color:rgba(255,255,255,.4);text-transform:uppercase;border-top:1px solid rgba(255,255,255,.18);padding-top:2px;margin-top:1px}
+    .uc-navbar__toggler{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;background:transparent;border:1px solid rgba(255,255,255,.2);border-radius:8px;cursor:pointer;padding:0}
+    .uc-navbar__toggler span{display:block;width:20px;height:2px;background:#fff;border-radius:2px}
+    .uc-navbar__collapse{display:flex;align-items:center;justify-content:center;flex:1;gap:2rem}
+    .uc-navbar__nav{display:flex;align-items:center;list-style:none;margin:0;padding:0;gap:.25rem}
+    .uc-nav-item{position:relative}
+    .uc-nav-link{display:inline-flex;align-items:center;gap:4px;padding:.45rem .85rem;font-size:.9rem;font-weight:600;color:rgba(255,255,255,.6);text-decoration:none;border-radius:6px;transition:color .15s;position:relative}
+    .uc-nav-link::after{content:"";position:absolute;bottom:-2px;left:50%;transform:translateX(-50%) scaleX(0);width:70%;height:2px;background:#fff;border-radius:2px;transition:transform .2s ease}
+    .uc-nav-link:hover,.uc-nav-link.active{color:#fff}
+    .uc-nav-link:hover::after,.uc-nav-link.active::after{transform:translateX(-50%) scaleX(1)}
+    .uc-nav-link--dropdown::after{display:none}
+    .uc-caret{font-size:.65rem;transition:transform .2s}
+    .uc-nav-link--dropdown[aria-expanded="true"] .uc-caret{transform:rotate(180deg)}
+    .uc-dropdown{background:#161616!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:12px!important;padding:.5rem!important;min-width:190px;box-shadow:0 16px 40px rgba(0,0,0,.55)!important}
+    .uc-dropdown__item{border-radius:8px!important;color:rgba(255,255,255,.75)!important;font-size:.875rem;padding:.5rem .8rem!important;transition:background .12s,color .12s}
+    .uc-dropdown__item:hover,.uc-dropdown__item:focus{background:rgba(255,255,255,.07)!important;color:#fff!important}
+    .uc-dropdown__item.text-danger{color:#f87171!important}
+    .uc-dropdown__item.text-danger:hover{background:rgba(248,113,113,.1)!important}
+    .uc-icon-pill{display:flex;align-items:center;gap:2px;background:#222;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:4px 6px}
+    .uc-icon-pill__btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;color:rgba(255,255,255,.7);background:transparent;border:none;cursor:pointer;transition:background .15s,color .15s;font-size:1rem;text-decoration:none;position:relative}
+    .uc-icon-pill__btn:hover{background:rgba(255,255,255,.1);color:#fff}
+    .uc-badge{position:absolute;top:0;right:0;transform:translate(30%,-30%);background:#ef4444;color:#fff;font-size:.6rem;font-weight:700;border-radius:999px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px}
+    .uc-navbar__auth{flex-shrink:0;display:flex;align-items:center}
+    .uc-btn-login{display:inline-flex;align-items:center;gap:6px;padding:.42rem 1.1rem;font-size:.88rem;font-weight:600;color:#111;background:#fff;border:2px solid #fff;border-radius:8px;text-decoration:none;transition:background .15s,color .15s}
+    .uc-btn-login:hover{background:transparent;color:#fff}
+    .uc-btn-login__arrow{font-size:.82rem;transition:transform .15s}
+    .uc-btn-login:hover .uc-btn-login__arrow{transform:translate(2px,-2px)}
+    .uc-btn-login-outline{display:inline-flex;align-items:center;padding:.42rem .9rem;font-size:.88rem;font-weight:600;color:rgba(255,255,255,.75);background:transparent;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;text-decoration:none;transition:color .15s,border-color .15s;}
+    .uc-btn-login-outline:hover{color:#fff;border-color:rgba(255,255,255,.6);}
+    @media(max-width:991.98px){
+      .uc-navbar__toggler{display:flex}
+      .uc-navbar__collapse{display:none;flex-direction:column;align-items:stretch;background:#0d0d0d;border-top:1px solid rgba(255,255,255,.07);padding:1rem 1.5rem 1.25rem;gap:1rem;position:absolute;top:64px;left:0;right:0;z-index:1029}
+      .uc-navbar__collapse.is-open{display:flex}
+      .uc-navbar__nav{flex-direction:column;align-items:flex-start;gap:0}
+      .uc-nav-link{width:100%;padding:.6rem .25rem;border-bottom:1px solid rgba(255,255,255,.05);border-radius:0}
+      .uc-nav-link::after{display:none}
+      .uc-icon-pill{border-radius:12px;padding:6px 10px}
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="uc-navbar">
+    <div class="uc-navbar__inner container-fluid">
+
+      <!-- LEFT: Logo -->
+      <a class="uc-navbar__brand" href="{% url 'core:home' %}">
+        {% if site_logo %}
+          <img src="{{ site_logo.image.url }}"
+               alt="{{ site_logo.alt_text }}"
+               height="{{ site_logo.height }}"
+               style="width:auto;display:block;" />
+        {% else %}
+          <span class="uc-logo-mark" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6 L4 16 Q4 22 11 22 Q18 22 18 16 L18 6" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+              <path d="M22 6 Q28 6 28 12 Q28 18 22 18 L20 18" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </svg>
+          </span>
+          <span class="uc-logo-text">
+            <span class="uc-logo-title">URBAN</span>
+            <span class="uc-logo-sub">CASE</span>
+          </span>
+        {% endif %}
+      </a>
+
+      <!-- MOBILE toggler -->
+      <button class="uc-navbar__toggler" type="button" aria-controls="ucNavMenu" aria-expanded="false" aria-label="Toggle navigation" onclick="var m=document.getElementById('ucNavMenu');var open=m.classList.toggle('is-open');this.setAttribute('aria-expanded',open)">
+        <span></span><span></span><span></span>
+      </button>
+
+      <!-- CENTER + RIGHT: collapsible block -->
+      <div class="uc-navbar__collapse" id="ucNavMenu">
+
+        <!-- CENTER links -->
+        <ul class="uc-navbar__nav">
+          <li class="uc-nav-item">
+            <a class="uc-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'core:home' %}">Home</a>
+          </li>
+          <li class="uc-nav-item dropdown">
+            <a class="uc-nav-link uc-nav-link--dropdown {% if request.resolver_match.app_name == 'products' %}active{% endif %}"
+               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Product <i class="bi bi-chevron-down uc-caret"></i>
+            </a>
+            <ul class="dropdown-menu uc-dropdown">
+              <li><a class="dropdown-item uc-dropdown__item" href="{% url 'products:list' %}"><i class="bi bi-grid me-2"></i>All Products</a></li>
+              <li><a class="dropdown-item uc-dropdown__item" href="{% url 'products:list' %}?sort=new"><i class="bi bi-stars me-2"></i>New Arrivals</a></li>
+              <li><a class="dropdown-item uc-dropdown__item" href="{% url 'products:list' %}?featured=1"><i class="bi bi-fire me-2"></i>Featured</a></li>
+            </ul>
+          </li>
+        </ul>
+
+        <!-- CENTER icon pill -->
+        <div class="uc-icon-pill">
+          {% if user.is_authenticated %}
+            <!-- Wishlist -->
+            <a href="{% url 'wishlist:list' %}" class="uc-icon-pill__btn position-relative" title="My Wishlist" aria-label="Wishlist">
+              <i class="bi bi-heart-fill"></i>
+              {% if wishlist_count %}
+                <span class="uc-badge">{{ wishlist_count }}</span>
+              {% endif %}
+            </a>
+            <!-- User -->
+            <div class="dropdown">
+              <button class="uc-icon-pill__btn" data-bs-toggle="dropdown" aria-expanded="false" title="My Account" aria-label="Account menu">
+                <i class="bi bi-person-fill"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end uc-dropdown">
+                <li class="uc-dropdown__header px-3 pt-2 pb-1 small text-secondary">{{ user.get_full_name|default:user.email|truncatechars:26 }}</li>
+                <li><hr class="dropdown-divider my-1"></li>
+                <li><a class="dropdown-item uc-dropdown__item" href="{% url 'wishlist:list' %}"><i class="bi bi-heart me-2"></i>My Wishlist</a></li>
+                <li><a class="dropdown-item uc-dropdown__item" href="{% url 'orders:my_orders' %}"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
+                {% if user.is_staff %}
+                  <li><hr class="dropdown-divider my-1"></li>
+                  <li><a class="dropdown-item uc-dropdown__item" href="/admin/"><i class="bi bi-shield-lock me-2"></i>Admin Panel</a></li>
+                {% endif %}
+                <li><hr class="dropdown-divider my-1"></li>
+                <li>
+                  <form method="post" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item uc-dropdown__item text-danger">
+                      <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          {% endif %}
+          <!-- Search -->
+          <button class="uc-icon-pill__btn" type="button" data-bs-toggle="modal" data-bs-target="#searchModal" title="Search" aria-label="Search">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+
+        <!-- RIGHT: Auth button -->
+        <div class="uc-navbar__auth">
+          {% if user.is_authenticated %}
+            <span class="uc-auth-name d-none d-xl-inline">{{ user.get_full_name|default:user.email|truncatechars:16 }}</span>
+          {% else %}
+            <a href="{% url 'account_login' %}" class="uc-btn-login">
+              Login <i class="bi bi-arrow-up-right uc-btn-login__arrow"></i>
+            </a>
+          {% endif %}
+        </div>
+
+      </div><!-- /.collapse -->
+    </div><!-- /.inner -->
+  </nav>
+
+  <!-- Search Modal -->
+  <div class="modal fade" id="searchModal" tabindex="-1" aria-label="Search" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary rounded-3">
+        <div class="modal-body p-3">
+          <form class="d-flex gap-2" method="get" action="{% url 'products:list' %}">
+            <input class="form-control form-control-lg bg-black border-secondary text-white" type="search" name="q" placeholder="Search products…" autofocus />
+            <button class="btn btn-warning px-4 fw-semibold" type="submit">Search</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash messages -->
+  {% if messages %}
+    <div class="container mt-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Page content -->
+  <main class="container my-4">
+    {% block content %}{% endblock %}
+  </main>
+
+
+
+
+  <!-- Contact Section -->
+  <section class="contact-section bg-dark text-light py-5 mt-5">
+    <div class="container">
+
+      <!-- Section Header -->
+      <div class="text-center mb-5">
+        <h2 class="fw-bold">
+          <span class="contact-accent">Get In</span> Touch
+        </h2>
+        <p class="text-secondary mx-auto" style="max-width:520px;">
+          Have a question, feedback, or just want to say hello? We'd love to hear from you.
+          Drop us a message and we'll get back to you shortly.
+        </p>
+      </div>
+
+      <div class="row g-4 align-items-start">
+
+        <!-- Contact Info Cards (data from DB via site_settings context processor) -->
+        <div class="col-12 col-md-5">
+          <div class="d-flex flex-column gap-3">
+
+            {% if site_settings.address %}
+            <div class="contact-info-card d-flex align-items-start gap-3 p-3 rounded-3">
+              <div class="contact-icon-wrap rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                <i class="bi bi-geo-alt-fill fs-5"></i>
+              </div>
+              <div>
+                <h6 class="fw-semibold mb-1">Our Address</h6>
+                <p class="text-secondary small mb-0">{{ site_settings.address }}</p>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if site_settings.phone %}
+            <div class="contact-info-card d-flex align-items-start gap-3 p-3 rounded-3">
+              <div class="contact-icon-wrap rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                <i class="bi bi-telephone-fill fs-5"></i>
+              </div>
+              <div>
+                <h6 class="fw-semibold mb-1">Phone</h6>
+                <p class="text-secondary small mb-0">
+                  <a href="tel:{{ site_settings.phone }}" class="text-secondary text-decoration-none contact-link">{{ site_settings.phone }}</a>
+                </p>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if site_settings.email %}
+            <div class="contact-info-card d-flex align-items-start gap-3 p-3 rounded-3">
+              <div class="contact-icon-wrap rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                <i class="bi bi-envelope-fill fs-5"></i>
+              </div>
+              <div>
+                <h6 class="fw-semibold mb-1">Email</h6>
+                <p class="text-secondary small mb-0">
+                  <a href="mailto:{{ site_settings.email }}" class="text-secondary text-decoration-none contact-link">{{ site_settings.email }}</a>
+                </p>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if site_settings.business_hours %}
+            <div class="contact-info-card d-flex align-items-start gap-3 p-3 rounded-3">
+              <div class="contact-icon-wrap rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                <i class="bi bi-clock-fill fs-5"></i>
+              </div>
+              <div>
+                <h6 class="fw-semibold mb-1">Business Hours</h6>
+                <p class="text-secondary small mb-0">{{ site_settings.business_hours }}</p>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Social Links from DB -->
+            {% if site_settings %}
+            <div class="d-flex gap-3 mt-1 ps-1">
+              {% if site_settings.instagram_url %}
+              <a href="{{ site_settings.instagram_url }}" class="contact-social-btn rounded-circle d-flex align-items-center justify-content-center" aria-label="Instagram" target="_blank" rel="noopener">
+                <i class="bi bi-instagram fs-5"></i>
+              </a>
+              {% endif %}
+              {% if site_settings.whatsapp_url %}
+              <a href="{{ site_settings.whatsapp_url }}" class="contact-social-btn rounded-circle d-flex align-items-center justify-content-center" aria-label="WhatsApp" target="_blank" rel="noopener">
+                <i class="bi bi-whatsapp fs-5"></i>
+              </a>
+              {% endif %}
+              {% if site_settings.facebook_url %}
+              <a href="{{ site_settings.facebook_url }}" class="contact-social-btn rounded-circle d-flex align-items-center justify-content-center" aria-label="Facebook" target="_blank" rel="noopener">
+                <i class="bi bi-facebook fs-5"></i>
+              </a>
+              {% endif %}
+              {% if site_settings.twitter_url %}
+              <a href="{{ site_settings.twitter_url }}" class="contact-social-btn rounded-circle d-flex align-items-center justify-content-center" aria-label="Twitter / X" target="_blank" rel="noopener">
+                <i class="bi bi-twitter-x fs-5"></i>
+              </a>
+              {% endif %}
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="col-12 col-md-7">
+          <form class="contact-form p-4 rounded-3" novalidate>
+            <div class="row g-3">
+              <div class="col-12 col-sm-6">
+                <label for="contactName" class="form-label text-secondary small fw-semibold">Full Name</label>
+                <input type="text" class="form-control contact-input" id="contactName" placeholder="Sudip Bhatta" required />
+              </div>
+              <div class="col-12 col-sm-6">
+                <label for="contactEmail" class="form-label text-secondary small fw-semibold">Email Address</label>
+                <input type="email" class="form-control contact-input" id="contactEmail" placeholder="" required />
+              </div>
+              <div class="col-12">
+                <label for="contactPhone" class="form-label text-secondary small fw-semibold">Phone <span class="text-secondary fw-normal">(optional)</span></label>
+                <input type="tel" class="form-control contact-input" id="contactPhone" placeholder="+91 98765 43210" />
+              </div>
+              <div class="col-12">
+                <label for="contactSubject" class="form-label text-secondary small fw-semibold">Subject</label>
+                <input type="text" class="form-control contact-input" id="contactSubject" placeholder="Order enquiry / Product question…" required />
+              </div>
+              <div class="col-12">
+                <label for="contactMessage" class="form-label text-secondary small fw-semibold">Message</label>
+                <textarea class="form-control contact-input" id="contactMessage" rows="4" placeholder="Tell us how we can help you…" required></textarea>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-warning fw-semibold px-4 py-2 w-100 w-sm-auto contact-submit">
+                  <i class="bi bi-send-fill me-2"></i>Send Message
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-light py-4 border-top border-secondary">
+    <div class="container text-center">
+      <p class="mb-1 text-secondary small">© 2026 Your UrbanCase. All rights reserved. | Developed by Kaustubh</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

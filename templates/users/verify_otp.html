@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% block title %}Verify Email -- UrbanCase{% endblock %}
+
+{% block extra_head %}
+<style>
+.auth-page { min-height: calc(100vh - 64px); display:flex; }
+
+.auth-panel {
+  display:none; width:42%; background:#0d0d0d; position:relative;
+  overflow:hidden; padding:3rem; flex-direction:column; justify-content:space-between;
+}
+@media(min-width:992px){ .auth-panel{ display:flex; } }
+.auth-panel__bg {
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.05) 0%,transparent 60%);
+}
+.auth-panel__grid {
+  position:absolute;inset:0;opacity:.04;
+  background-image:linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.auth-panel__logo { position:relative;z-index:1; }
+.auth-panel__logo-mark {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;background:#fff;border-radius:10px;
+  font-size:.9rem;font-weight:800;letter-spacing:.06em;color:#111;text-decoration:none;
+}
+.auth-panel__logo-text { display:flex;flex-direction:column;line-height:1.1;margin-left:10px; }
+.auth-panel__logo-title { font-size:.6rem;font-weight:800;letter-spacing:.2em;color:#fff;text-transform:uppercase; }
+.auth-panel__logo-sub   { font-size:.55rem;font-weight:500;letter-spacing:.24em;color:rgba(255,255,255,.4);text-transform:uppercase;border-top:1px solid rgba(255,255,255,.15);padding-top:2px;margin-top:1px; }
+.auth-panel__body { position:relative;z-index:1; }
+.auth-panel__headline { font-size:2.1rem;font-weight:800;color:#fff;line-height:1.2;margin-bottom:1rem; }
+.auth-panel__headline span { color:rgba(255,255,255,.35); }
+.auth-panel__sub { color:rgba(255,255,255,.5);font-size:.9rem;line-height:1.6; }
+.auth-panel__security {
+  display:flex;align-items:flex-start;gap:1rem;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;padding:1rem;margin-top:1.5rem;
+}
+.auth-panel__security i { color:rgba(255,255,255,.6);font-size:1.1rem;margin-top:2px;flex-shrink:0; }
+.auth-panel__security p { color:rgba(255,255,255,.45);font-size:.8rem;line-height:1.6;margin:0; }
+.auth-panel__footer { position:relative;z-index:1;font-size:.75rem;color:rgba(255,255,255,.2); }
+
+.auth-form-side {
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:2rem 1.5rem;background:#f9f9f9;
+}
+.auth-form-wrap { width:100%;max-width:400px; }
+
+/* Email envelope animation */
+.otp-envelope {
+  width:72px;height:72px;border-radius:18px;
+  background:linear-gradient(135deg,#111 0%,#333 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;color:#fff;margin:0 auto 1.25rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+  animation:pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { box-shadow:0 8px 24px rgba(0,0,0,.18); }
+  50%      { box-shadow:0 8px 32px rgba(0,0,0,.3); }
+}
+
+.otp-heading { font-size:1.5rem;font-weight:800;color:#111;text-align:center;margin-bottom:.3rem; }
+.otp-sub { font-size:.875rem;color:#888;text-align:center;margin-bottom:.25rem; }
+.otp-email { font-size:.9rem;font-weight:700;color:#111;text-align:center;margin-bottom:1.5rem;word-break:break-all; }
+
+/* 6 separate digit boxes */
+.otp-boxes { display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem; }
+.otp-box {
+  width:48px;height:58px;border:2px solid #e0e0e0;border-radius:12px;
+  font-size:1.5rem;font-weight:800;color:#111;text-align:center;
+  background:#fff;outline:none;
+  transition:border-color .15s,box-shadow .15s,transform .1s;
+  caret-color: transparent;
+}
+.otp-box:focus { border-color:#111;box-shadow:0 0 0 3px rgba(17,17,17,.08);transform:scale(1.05); }
+.otp-box.filled { border-color:#111;background:#fafafa; }
+.otp-box.error  { border-color:#ef4444;animation:shake .3s ease; }
+@keyframes shake {
+  0%,100% { transform:translateX(0); }
+  25%      { transform:translateX(-4px); }
+  75%      { transform:translateX(4px); }
+}
+/* Hidden real input */
+#id_otp { position:absolute;opacity:0;width:0;height:0;pointer-events:none; }
+.otp-error { font-size:.8rem;color:#ef4444;text-align:center;margin-bottom:.75rem;min-height:1.2em; }
+
+/* Countdown ring */
+.otp-timer-wrap { display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:1.25rem; }
+.otp-timer-ring { width:36px;height:36px;flex-shrink:0; }
+.otp-timer-ring circle { fill:none;stroke-width:3; }
+.otp-timer-ring .track { stroke:#e8e8e8; }
+.otp-timer-ring .prog  { stroke:#111;stroke-linecap:round;transition:stroke-dashoffset .9s linear; transform:rotate(-90deg);transform-origin:50% 50%; }
+.otp-timer-text { font-size:.85rem;color:#555; }
+.otp-timer-text span { font-weight:700;color:#111; }
+.otp-timer-text .expired { color:#ef4444; }
+
+.auth-submit {
+  width:100%;padding:.82rem;background:#111;color:#fff;
+  border:none;border-radius:12px;font-size:.95rem;font-weight:700;
+  cursor:pointer;letter-spacing:.01em;
+  transition:background .15s,transform .1s,box-shadow .15s;
+}
+.auth-submit:hover { background:#222;box-shadow:0 6px 20px rgba(0,0,0,.18);transform:translateY(-1px); }
+.auth-submit:active { transform:translateY(0); }
+.auth-submit:disabled { background:#ccc;cursor:not-allowed;transform:none;box-shadow:none; }
+
+.otp-resend-row { text-align:center;margin-top:1rem; }
+.otp-resend-btn { background:none;border:none;font-size:.83rem;color:#888;cursor:pointer;padding:0;text-decoration:underline; }
+.otp-resend-btn:hover { color:#111; }
+
+.auth-switch { text-align:center;margin-top:1.25rem;font-size:.83rem;color:#999; }
+.auth-switch a { color:#111;font-weight:700;text-decoration:none; }
+.auth-switch a:hover { text-decoration:underline; }
+
+/* Attempts bar */
+.attempts-bar { display:flex;gap:4px;justify-content:center;margin-bottom:.75rem; }
+.attempt-dot {
+  width:8px;height:8px;border-radius:50%;background:#e0e0e0;
+  transition:background .2s;
+}
+.attempt-dot.used { background:#ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+
+  <!-- LEFT panel -->
+  <div class="auth-panel">
+    <div class="auth-panel__bg"></div>
+    <div class="auth-panel__grid"></div>
+
+    <div class="auth-panel__logo d-flex align-items-center">
+      {% if site_logo %}
+        <a href="{% url 'core:home' %}">
+          <img src="{{ site_logo.image.url }}" alt="{{ site_logo.alt_text }}" height="38" />
+        </a>
+      {% else %}
+        <a href="{% url 'core:home' %}" class="auth-panel__logo-mark">UC</a>
+        <div class="auth-panel__logo-text">
+          <span class="auth-panel__logo-title">Urban</span>
+          <span class="auth-panel__logo-sub">Case</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="auth-panel__body">
+      <h2 class="auth-panel__headline">
+        Almost<br>there,<br><span>verify.</span>
+      </h2>
+      <p class="auth-panel__sub">
+        We sent a one-time code to your<br>
+        email to confirm it's really you.
+      </p>
+      <div class="auth-panel__security">
+        <i class="bi bi-shield-lock-fill"></i>
+        <p>
+          Your code is valid for 10 minutes and can only be used once.
+          Never share it with anyone including UrbanCase support.
+        </p>
+      </div>
+    </div>
+
+    <div class="auth-panel__footer">
+      &copy; {% now "Y" %} UrbanCase. All rights reserved.
+    </div>
+  </div>
+
+  <!-- RIGHT form -->
+  <div class="auth-form-side">
+    <div class="auth-form-wrap">
+
+      <div class="otp-envelope">
+        <i class="bi bi-envelope-at-fill"></i>
+      </div>
+
+      <h2 class="otp-heading">Check your inbox</h2>
+      <p class="otp-sub">We sent a 6-digit code to</p>
+      <p class="otp-email">{{ email }}</p>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} py-2 px-3 small rounded-3 mb-3 text-center">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" autocomplete="off" id="otpForm">
+        {% csrf_token %}
+
+        <!-- Digit boxes -->
+        <div class="otp-boxes" id="otpBoxes">
+          {% for i in "123456" %}
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                   class="otp-box" data-idx="{{ forloop.counter0 }}"
+                   aria-label="Digit {{ forloop.counter }}" />
+          {% endfor %}
+        </div>
+
+        <!-- Hidden real input sent to server -->
+        <input type="text" name="otp" id="id_otp" />
+
+        <p class="otp-error" id="otpError">
+          {% if form.otp.errors %}{{ form.otp.errors.0 }}{% endif %}
+        </p>
+
+        <!-- Attempt dots -->
+        <div class="attempts-bar" id="attemptDots">
+          {% for i in "12345" %}<div class="attempt-dot" id="dot-{{ forloop.counter0 }}"></div>{% endfor %}
+        </div>
+
+        <!-- Timer -->
+        <div class="otp-timer-wrap">
+          <svg class="otp-timer-ring" viewBox="0 0 36 36">
+            <circle class="track" cx="18" cy="18" r="15.9"/>
+            <circle class="prog" id="timerRing" cx="18" cy="18" r="15.9"
+                    stroke-dasharray="100 100"
+                    stroke-dashoffset="0"/>
+          </svg>
+          <p class="otp-timer-text mb-0">
+            Code expires in <span id="countdownText">{{ minutes_left }}:{% if secs_left < 10 %}0{% endif %}{{ secs_left }}</span>
+          </p>
+        </div>
+
+        <button type="submit" class="auth-submit" id="verifyBtn" disabled>
+          <i class="bi bi-shield-check me-1"></i> Verify &amp; Create Account
+        </button>
+      </form>
+
+      <div class="otp-resend-row">
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" name="resend" class="otp-resend-btn">
+            Didn't receive it? Resend code
+          </button>
+        </form>
+      </div>
+
+      <p class="auth-switch">
+        <a href="{% url 'users:signup' %}">
+          <i class="bi bi-arrow-left me-1"></i> Back to sign up
+        </a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  /* ── OTP box logic ── */
+  var boxes   = Array.from(document.querySelectorAll(".otp-box"));
+  var hidden  = document.getElementById("id_otp");
+  var btn     = document.getElementById("verifyBtn");
+  var errEl   = document.getElementById("otpError");
+
+  function syncHidden() {
+    var val = boxes.map(function(b){ return b.value; }).join("");
+    hidden.value = val;
+    btn.disabled = val.length < 6;
+    boxes.forEach(function(b){ b.classList.toggle("filled", b.value !== ""); });
+  }
+
+  boxes.forEach(function(box, idx) {
+    box.addEventListener("keydown", function(e) {
+      if (e.key === "Backspace" && !box.value && idx > 0) {
+        boxes[idx - 1].focus();
+        boxes[idx - 1].value = "";
+        syncHidden();
+        e.preventDefault();
+      }
+    });
+    box.addEventListener("input", function() {
+      var v = box.value.replace(/\D/g, "");
+      box.value = v.slice(-1);
+      syncHidden();
+      if (v && idx < 5) boxes[idx + 1].focus();
+    });
+    box.addEventListener("paste", function(e) {
+      e.preventDefault();
+      var paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"");
+      paste.slice(0, 6).split("").forEach(function(ch, i) {
+        if (boxes[i]) boxes[i].value = ch;
+      });
+      syncHidden();
+      var next = Math.min(paste.length, 5);
+      boxes[next].focus();
+    });
+    box.addEventListener("focus", function() { box.select(); });
+  });
+
+  /* pre-fill on server error */
+  {% if form.otp.errors %}
+    boxes.forEach(function(b){ b.classList.add("error"); });
+    setTimeout(function(){ boxes.forEach(function(b){ b.classList.remove("error"); }); }, 600);
+  {% endif %}
+
+  /* ── Countdown + ring ── */
+  var totalSecs = {{ total_secs }};
+  var ring      = document.getElementById("timerRing");
+  var txt       = document.getElementById("countdownText");
+  var circ      = 2 * Math.PI * 15.9; /* circumference */
+
+  function updateRing(remaining) {
+    var pct    = remaining / totalSecs;
+    var offset = circ * (1 - pct);
+    ring.style.strokeDasharray  = circ + " " + circ;
+    ring.style.strokeDashoffset = offset;
+    if (remaining <= 30) ring.style.stroke = "#ef4444";
+  }
+  updateRing(totalSecs);
+
+  var secs = totalSecs;
+  var timer = setInterval(function() {
+    secs--;
+    if (secs <= 0) {
+      clearInterval(timer);
+      txt.textContent = "expired";
+      txt.className = "expired";
+      btn.disabled = true;
+      boxes.forEach(function(b){ b.disabled = true; });
+      updateRing(0);
+      return;
+    }
+    var m = Math.floor(secs / 60);
+    var s = secs % 60;
+    txt.textContent = m + ":" + (s < 10 ? "0" : "") + s;
+    updateRing(secs);
+  }, 1000);
+
+  boxes[0].focus();
+})();
+</script>
+{% endblock %}

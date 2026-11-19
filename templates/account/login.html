@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% load static socialaccount %}
+{% block title %}Sign In -- UrbanCase{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ── Auth page layout ── */
+.auth-page { min-height: calc(100vh - 64px); display:flex; }
+
+.auth-panel {
+  display: none;
+  width: 42%;
+  background: #0d0d0d;
+  position: relative;
+  overflow: hidden;
+  padding: 3rem;
+  flex-direction: column;
+  justify-content: space-between;
+}
+@media(min-width:992px){ .auth-panel{ display:flex; } }
+
+.auth-panel__bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.04) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 80%, rgba(255,255,255,.03) 0%, transparent 50%);
+}
+.auth-panel__grid {
+  position: absolute; inset: 0; opacity: .04;
+  background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.auth-panel__logo { position: relative; z-index: 1; }
+.auth-panel__logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; background: #fff; border-radius: 10px;
+  font-size: .9rem; font-weight: 800; letter-spacing: .06em; color: #111;
+  text-decoration: none;
+}
+.auth-panel__logo-text {
+  display: flex; flex-direction: column; line-height: 1.1; margin-left: 10px;
+}
+.auth-panel__logo-title { font-size: .6rem; font-weight: 800; letter-spacing: .2em; color: #fff; text-transform: uppercase; }
+.auth-panel__logo-sub   { font-size: .55rem; font-weight: 500; letter-spacing: .24em; color: rgba(255,255,255,.4); text-transform: uppercase; border-top: 1px solid rgba(255,255,255,.15); padding-top: 2px; margin-top: 1px; }
+
+.auth-panel__body { position: relative; z-index: 1; }
+.auth-panel__headline {
+  font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1.15; margin-bottom: 1rem;
+}
+.auth-panel__headline span { color: rgba(255,255,255,.35); }
+.auth-panel__sub { color: rgba(255,255,255,.5); font-size: .9rem; line-height: 1.6; }
+
+.auth-panel__features { list-style: none; padding: 0; margin: 1.5rem 0 0; }
+.auth-panel__features li {
+  display: flex; align-items: center; gap: .65rem;
+  color: rgba(255,255,255,.55); font-size: .85rem; margin-bottom: .65rem;
+}
+.auth-panel__features li i { color: rgba(255,255,255,.9); font-size: .95rem; }
+
+.auth-panel__footer { position: relative; z-index: 1; font-size: .75rem; color: rgba(255,255,255,.2); }
+
+/* ── Form side ── */
+.auth-form-side {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 2rem 1.5rem; background: #f9f9f9;
+}
+
+.auth-form-wrap { width: 100%; max-width: 400px; }
+
+.auth-form-wrap h2 { font-size: 1.6rem; font-weight: 800; color: #111; margin-bottom: .25rem; }
+.auth-form-wrap .auth-sub { font-size: .875rem; color: #888; margin-bottom: 1.75rem; }
+
+/* Google btn */
+.btn-goog {
+  display: flex; align-items: center; justify-content: center; gap: .6rem;
+  width: 100%; padding: .7rem 1rem; border: 1.5px solid #e0e0e0;
+  border-radius: 12px; background: #fff; color: #3c4043;
+  font-size: .88rem; font-weight: 600; text-decoration: none;
+  transition: box-shadow .15s, border-color .15s;
+}
+.btn-goog:hover { box-shadow: 0 2px 12px rgba(0,0,0,.1); border-color: #bbb; color: #111; }
+
+/* Divider */
+.auth-or {
+  display: flex; align-items: center; gap: .75rem;
+  margin: 1.25rem 0; color: #ccc; font-size: .78rem;
+}
+.auth-or::before,.auth-or::after { content:""; flex:1; height:1px; background:#e8e8e8; }
+
+/* Input group */
+.auth-field { margin-bottom: 1.1rem; }
+.auth-field label { display: block; font-size: .8rem; font-weight: 700; color: #333; margin-bottom: .4rem; letter-spacing: .02em; }
+.auth-input-wrap { position: relative; }
+.auth-input {
+  width: 100%; padding: .75rem 1rem; border: 1.5px solid #e0e0e0;
+  border-radius: 12px; font-size: .9rem; background: #fff; color: #111;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.auth-input:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(17,17,17,.07); }
+.auth-input.is-bad { border-color: #ef4444; }
+.auth-input.is-bad:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+.auth-pw-toggle {
+  position: absolute; right: .85rem; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: #999; padding: 0;
+  font-size: 1rem; line-height: 1;
+}
+.auth-pw-toggle:hover { color: #333; }
+.auth-field-error { font-size: .78rem; color: #ef4444; margin-top: .35rem; }
+
+/* Submit btn */
+.auth-submit {
+  width: 100%; padding: .82rem; background: #111; color: #fff;
+  border: none; border-radius: 12px; font-size: .95rem; font-weight: 700;
+  cursor: pointer; letter-spacing: .01em;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  margin-top: .25rem;
+}
+.auth-submit:hover { background: #222; box-shadow: 0 6px 20px rgba(0,0,0,.18); transform: translateY(-1px); }
+.auth-submit:active { transform: translateY(0); }
+
+/* Footer link */
+.auth-switch { text-align: center; margin-top: 1.5rem; font-size: .83rem; color: #999; }
+.auth-switch a { color: #111; font-weight: 700; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
+
+/* Remember / forgot row */
+.auth-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+.auth-check { display: flex; align-items: center; gap: .45rem; cursor: pointer; }
+.auth-check input { width: 16px; height: 16px; accent-color: #111; cursor: pointer; }
+.auth-check span { font-size: .8rem; color: #666; }
+.auth-forgot { font-size: .8rem; color: #888; text-decoration: none; }
+.auth-forgot:hover { color: #111; }
+
+/* Strength bar */
+.pw-strength { height: 4px; border-radius: 2px; margin-top: .5rem; background: #eee; overflow: hidden; }
+.pw-strength-bar { height: 100%; width: 0; border-radius: 2px; transition: width .3s, background .3s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+
+  <!-- LEFT panel -->
+  <div class="auth-panel">
+    <div class="auth-panel__bg"></div>
+    <div class="auth-panel__grid"></div>
+
+    <div class="auth-panel__logo d-flex align-items-center">
+      {% if site_logo %}
+        <a href="{% url 'core:home' %}">
+          <img src="{{ site_logo.image.url }}" alt="{{ site_logo.alt_text }}" height="38" />
+        </a>
+      {% else %}
+        <a href="{% url 'core:home' %}" class="auth-panel__logo-mark">UC</a>
+        <div class="auth-panel__logo-text">
+          <span class="auth-panel__logo-title">Urban</span>
+          <span class="auth-panel__logo-sub">Case</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="auth-panel__body">
+      <h2 class="auth-panel__headline">
+        Good to<br>see you<br><span>again.</span>
+      </h2>
+      <p class="auth-panel__sub">
+        Sign in to access your orders,<br>wishlist and exclusive deals.
+      </p>
+      <ul class="auth-panel__features">
+        <li><i class="bi bi-bag-check"></i> Track your orders in real time</li>
+        <li><i class="bi bi-heart"></i> Save items to your wishlist</li>
+        <li><i class="bi bi-shield-check"></i> Secure checkout every time</li>
+      </ul>
+    </div>
+
+    <div class="auth-panel__footer">
+      &copy; {% now "Y" %} UrbanCase. All rights reserved.
+    </div>
+  </div>
+
+  <!-- RIGHT form -->
+  <div class="auth-form-side">
+    <div class="auth-form-wrap">
+
+      <h2>Sign in</h2>
+      <p class="auth-sub">Welcome back! Enter your credentials to continue.</p>
+
+      <!-- Google -->
+      {% get_providers as socialaccount_providers %}
+      {% if socialaccount_providers %}
+        <a href="{% provider_login_url 'google' %}" class="btn-goog">
+          <svg width="18" height="18" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          Continue with Google
+        </a>
+      {% endif %}
+
+      <div class="auth-or">or sign in with email</div>
+
+      <form method="post" action="{% url 'account_login' %}" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+            {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="auth-field">
+          <label for="id_login">Email address</label>
+          <div class="auth-input-wrap">
+            <input type="email" name="login" id="id_login"
+                   class="auth-input {% if form.login.errors %}is-bad{% endif %}"
+                   placeholder="you@example.com"
+                   value="{{ form.login.value|default:'' }}"
+                   autocomplete="email" />
+          </div>
+          {% if form.login.errors %}<p class="auth-field-error">{{ form.login.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label for="id_password">Password</label>
+          <div class="auth-input-wrap">
+            <input type="password" name="password" id="id_password"
+                   class="auth-input {% if form.password.errors %}is-bad{% endif %}"
+                   placeholder="Your password"
+                   autocomplete="current-password" />
+            <button type="button" class="auth-pw-toggle" onclick="togglePw('id_password',this)" aria-label="Show password">
+              <i class="bi bi-eye" id="id_password_icon"></i>
+            </button>
+          </div>
+          {% if form.password.errors %}<p class="auth-field-error">{{ form.password.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="auth-row">
+          <label class="auth-check">
+            <input type="checkbox" name="remember" id="id_remember" />
+            <span>Keep me signed in</span>
+          </label>
+          <a href="{% url 'account_reset_password' %}" class="auth-forgot">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="auth-submit">Sign In</button>
+      </form>
+
+      <p class="auth-switch">
+        Don't have an account? <a href="{% url 'users:signup' %}">Create one</a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function togglePw(inputId, btn) {
+  var inp = document.getElementById(inputId);
+  var icon = btn.querySelector("i");
+  if (inp.type === "password") {
+    inp.type = "text";
+    icon.className = "bi bi-eye-slash";
+  } else {
+    inp.type = "password";
+    icon.className = "bi bi-eye";
+  }
+}
+</script>
+{% endblock %}

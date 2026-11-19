@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}Login Error -- UrbanCase{% endblock %}
+
+{% block content %}
+<div style="min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;background:#f9f9f9;padding:2rem 1rem;">
+  <div style="width:100%;max-width:400px;background:#fff;border-radius:24px;padding:2.5rem 2rem;box-shadow:0 12px 48px rgba(0,0,0,.1);text-align:center;animation:fadeUp .3s ease both;">
+    <style>@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}</style>
+
+    <div style="width:72px;height:72px;border-radius:20px;background:#fff1f2;border:2px solid #fecdd3;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:1.8rem;color:#ef4444;">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+    </div>
+
+    <h2 style="font-size:1.5rem;font-weight:800;color:#111;margin-bottom:.4rem;">Login Failed</h2>
+    <p style="font-size:.88rem;color:#777;margin-bottom:1.75rem;line-height:1.6;">
+      Something went wrong while signing in with your third-party account.
+      This can happen if you cancelled the process or if the account is already linked to another profile.
+    </p>
+
+    <a href="{% url 'account_login' %}"
+       style="display:block;padding:.82rem;background:#111;color:#fff;border-radius:12px;font-size:.9rem;font-weight:700;text-decoration:none;margin-bottom:.75rem;transition:background .15s;">
+      <i class="bi bi-arrow-left me-2"></i> Back to Sign In
+    </a>
+    <a href="{% url 'users:signup' %}"
+       style="display:block;padding:.75rem;background:transparent;color:#888;border:1.5px solid #e0e0e0;border-radius:12px;font-size:.85rem;font-weight:600;text-decoration:none;">
+      Create a new account
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -13,9 +13,10 @@ python manage.py migrate --noinput
 echo "==> Collecting static files ..."
 python manage.py collectstatic --noinput
 
-echo "==> Starting Gunicorn ..."
+BIND_PORT="${PORT:-8000}"
+echo "==> Starting Gunicorn on port $BIND_PORT ..."
 exec gunicorn config.wsgi:application \
-  --bind 0.0.0.0:8000 \
+  --bind "0.0.0.0:$BIND_PORT" \
   --workers "${GUNICORN_WORKERS:-3}" \
   --timeout "${GUNICORN_TIMEOUT:-120}" \
   --access-logfile - \

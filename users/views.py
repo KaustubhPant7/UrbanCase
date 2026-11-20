@@ -1,3 +1,5 @@
+import random
+import string
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.hashers import make_password
@@ -24,19 +26,15 @@ def signup_view(request):
             email = form.cleaned_data["email"]
             password = form.cleaned_data["password1"]
 
-            # Delete any previous pending OTP for this email
             EmailOTP.objects.filter(email=email).delete()
 
-            # Create new OTP record
             otp_obj = EmailOTP.objects.create(
                 email=email,
                 password_hash=make_password(password),
             )
 
-            # Send OTP email
             _send_otp_email(email, otp_obj.otp)
 
-            # Store email in session for the verify step
             request.session["otp_email"] = email
             messages.success(
                 request,
@@ -63,7 +61,6 @@ def verify_otp_view(request):
         return redirect("users:signup")
 
     if request.method == "POST":
-        # Resend button
         if "resend" in request.POST:
             if otp_obj.is_expired():
                 EmailOTP.objects.filter(email=email).delete()
@@ -82,10 +79,7 @@ def verify_otp_view(request):
             entered = form.cleaned_data["otp"]
 
             if otp_obj.is_locked():
-                messages.error(
-                    request,
-                    "Too many wrong attempts. Please sign up again.",
-                )
+                messages.error(request, "Too many wrong attempts. Please sign up again.")
                 otp_obj.delete()
                 return redirect("users:signup")
 
@@ -100,7 +94,6 @@ def verify_otp_view(request):
                 remaining = 5 - otp_obj.attempts
                 form.add_error("otp", f"Wrong code. {remaining} attempt(s) left.")
             else:
-                # OTP correct -- create the user
                 user = User.objects.create(
                     email=email,
                     username=email,
@@ -116,9 +109,9 @@ def verify_otp_view(request):
     else:
         form = OTPVerifyForm()
 
-    total_secs = (otp_obj.expires_at - timezone.now()).total_seconds()
-    minutes_left = max(0, int(total_secs // 60))
-    secs_left = max(0, int(total_secs % 60))
+    total_secs = max(0, (otp_obj.expires_at - timezone.now()).total_seconds())
+    minutes_left = int(total_secs // 60)
+    secs_left = int(total_secs % 60)
 
     return render(
         request,
@@ -128,13 +121,12 @@ def verify_otp_view(request):
             "email": email,
             "minutes_left": minutes_left,
             "secs_left": secs_left,
-            "total_secs": max(0, int(total_secs)),
+            "total_secs": int(total_secs),
         },
     )
 
 
 def _make_otp():
-    import random, string
     return "".join(random.choices(string.digits, k=6))
 
 
@@ -143,8 +135,8 @@ def _send_otp_email(email, otp):
         subject="Your UrbanCase verification code",
         message=(
             f"Your one-time verification code is: {otp}\n\n"
-            f"This code is valid for 10 minutes.\n"
-            f"Do not share this code with anyone."
+            "This code is valid for 10 minutes.\n"
+            "Do not share this code with anyone."
         ),
         from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@urbancase.com"),
         recipient_list=[email],

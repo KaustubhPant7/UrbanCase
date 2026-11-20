@@ -7,7 +7,6 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
-# Wildcard subdomains for Railway and Vercel previews
 ALLOWED_HOSTS += [".railway.app", ".up.railway.app", ".vercel.app"]
 
 INSTALLED_APPS = [
@@ -18,6 +17,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "storages",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -63,9 +63,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# ── Database ─────────────────────────────────────────────────────────
-# USE_POSTGRES=True  -> PostgreSQL (Railway / Docker / production)
-# USE_POSTGRES unset -> SQLite   (local dev without Docker)
+# ── Database ──────────────────────────────────────────────────────────
 if config("USE_POSTGRES", default=False, cast=bool):
     DATABASES = {
         "default": {
@@ -75,7 +73,6 @@ if config("USE_POSTGRES", default=False, cast=bool):
             "PASSWORD":     config("POSTGRES_PASSWORD", default=""),
             "HOST":         config("DB_HOST",           default="localhost"),
             "PORT":         config("DB_PORT",           default="5432"),
-            # 0 = close connection after each request (required for Railway / PgBouncer)
             "CONN_MAX_AGE": config("DB_CONN_MAX_AGE",  default=0, cast=int),
         }
     }
@@ -99,7 +96,7 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
-# ── Static files ─────────────────────────────────────────────────────
+# ── Static files (served by WhiteNoise) ───────────────────────────────
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -109,15 +106,36 @@ STATICFILES_STORAGE = (
     else "django.contrib.staticfiles.storage.StaticFilesStorage"
 )
 
-# ── Media files ──────────────────────────────────────────────────────
-# NOTE: On Railway, media uploads do NOT persist across deploys.
-# For production use an S3-compatible storage (e.g. Cloudflare R2, AWS S3).
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# ── Media files ───────────────────────────────────────────────────────
+# In production: stored on Cloudflare R2 (S3-compatible, free tier).
+# In development: stored locally.
+_USE_S3 = config("USE_S3", default=False, cast=bool)
+
+if _USE_S3:
+    # Cloudflare R2 / AWS S3 settings
+    AWS_ACCESS_KEY_ID       = config("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY   = config("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="urbancase-media")
+    AWS_S3_REGION_NAME      = config("AWS_S3_REGION_NAME",      default="auto")
+    AWS_S3_ENDPOINT_URL     = config("AWS_S3_ENDPOINT_URL",     default="")
+    AWS_S3_CUSTOM_DOMAIN    = config("AWS_S3_CUSTOM_DOMAIN",    default="")
+    AWS_DEFAULT_ACL         = "public-read"
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    AWS_QUERYSTRING_AUTH    = False
+
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+    else:
+        MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+else:
+    MEDIA_URL  = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ── django-allauth ───────────────────────────────────────────────────
+# ── django-allauth ────────────────────────────────────────────────────
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -144,7 +162,7 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_REDIRECT_URL  = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-# ── Email ─────────────────────────────────────────────────────────────
+# ── Email ──────────────────────────────────────────────────────────────
 EMAIL_BACKEND       = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST          = config("EMAIL_HOST",          default="smtp.gmail.com")
 EMAIL_PORT          = config("EMAIL_PORT",          default=587, cast=int)
@@ -153,7 +171,7 @@ EMAIL_HOST_USER     = config("EMAIL_HOST_USER",     default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL  = config("DEFAULT_FROM_EMAIL",  default="UrbanCase <noreply@urbancase.com>")
 
-# ── Production security ───────────────────────────────────────────────
+# ── Production security ────────────────────────────────────────────────
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER        = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT            = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
@@ -161,7 +179,6 @@ if not DEBUG:
     CSRF_COOKIE_SECURE             = True
     SECURE_HSTS_SECONDS            = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    # HSTS preload disabled -- only enable after registering domain on hstspreload.org
     SECURE_HSTS_PRELOAD            = False
     SECURE_CONTENT_TYPE_NOSNIFF    = True
     X_FRAME_OPTIONS                = "DENY"

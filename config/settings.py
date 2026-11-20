@@ -120,10 +120,36 @@ if _USE_S3:
     AWS_S3_ENDPOINT_URL     = config("AWS_S3_ENDPOINT_URL",     default="")
     AWS_S3_CUSTOM_DOMAIN    = config("AWS_S3_CUSTOM_DOMAIN",    default="")
     AWS_DEFAULT_ACL         = "public-read"
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
     AWS_QUERYSTRING_AUTH    = False
+    # Preserve original file format including GIF, WebP, PNG
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    AWS_S3_FILE_OVERWRITE    = False
+    AWS_S3_VERIFY            = True
+    # Let boto3 detect and set the correct Content-Type for all file formats
+    AWS_S3_USE_SSL           = True
 
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key":    config("AWS_ACCESS_KEY_ID"),
+                "secret_key":    config("AWS_SECRET_ACCESS_KEY"),
+                "bucket_name":   config("AWS_STORAGE_BUCKET_NAME", default="urbancase-media"),
+                "region_name":   config("AWS_S3_REGION_NAME",      default="auto"),
+                "endpoint_url":  config("AWS_S3_ENDPOINT_URL",     default=""),
+                "custom_domain": config("AWS_S3_CUSTOM_DOMAIN",    default=""),
+                "default_acl":   "public-read",
+                "querystring_auth": False,
+                "file_overwrite": False,
+                "object_parameters": {"CacheControl": "max-age=86400"},
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
+    DEFAULT_FILE_STORAGE = "core.storage_backends.MediaStorage"
 
     if AWS_S3_CUSTOM_DOMAIN:
         MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
